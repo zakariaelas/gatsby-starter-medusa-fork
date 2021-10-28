@@ -4,11 +4,6 @@ const CartContext = React.createContext(null);
 
 const initialState = {
   items: [],
-  isEmpty: true,
-  // totalItems: 0,
-  // totalUniqueItems: 0,
-  cartTotal: 0,
-  metadata: {},
 };
 
 const ACTIONS = {
