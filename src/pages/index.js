@@ -1,14 +1,12 @@
-import React, { useContext } from "react";
+import { graphql, Link } from "gatsby";
+import React from "react";
 import { FaGithub } from "react-icons/fa";
-import StoreContext from "../context/store-context";
-import { graphql } from "gatsby";
+import { useProducts } from "../medusa-hooks";
 import * as styles from "../styles/home.module.css";
-import { Link } from "gatsby";
-import { formatPrices } from "../utils/format-price";
 
 // markup
 const IndexPage = ({ data }) => {
-  const { cart, products } = useContext(StoreContext);
+  const { products } = useProducts();
 
   return (
     <div className={styles.container}>
@@ -112,7 +110,7 @@ const IndexPage = ({ data }) => {
                     <Link to={`/product/${p.id}`}>
                       <div>
                         <h2>{p.title}</h2>
-                        <p>{formatPrices(cart, p.variants[0])}</p>
+                        <p>19.50 EUR</p>
                       </div>
                     </Link>
                   </div>

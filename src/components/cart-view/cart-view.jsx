@@ -4,20 +4,24 @@ import StoreContext from "../../context/store-context";
 import { Link, navigate } from "gatsby";
 import * as styles from "../../styles/cart-view.module.css";
 import { quantity, sum, formatPrice } from "../../utils/helper-functions";
+import { useCart } from "../../medusa-hooks";
 
 const CartView = () => {
   const { cartView, updateCartViewDisplay, updateCheckoutStep } =
     useContext(DisplayContext);
   const { cart, currencyCode, updateLineItem, removeLineItem } =
     useContext(StoreContext);
+  const { items } = useCart()
+
+  console.log({ items })
 
   return (
     <div className={`${styles.container} ${cartView ? styles.active : null}`}>
       <div className={styles.top}>
         <p>Bag</p>
         <p>
-          {cart.items.length > 0 ? cart.items.map(quantity).reduce(sum) : 0}{" "}
-          {cart.items.length > 0 && cart.items.map(quantity).reduce(sum) === 1
+          {items.length > 0 ? items.map(quantity).reduce(sum) : 0}{" "}
+          {items.length > 0 && items.map(quantity).reduce(sum) === 1
             ? "item"
             : "items"}
         </p>
@@ -29,7 +33,7 @@ const CartView = () => {
         </button>
       </div>
       <div className={styles.overview}>
-        {cart.items
+        {items
           .sort((a, b) => {
             const createdAtA = new Date(a.created_at),
               createdAtB = new Date(b.created_at);
@@ -40,27 +44,17 @@ const CartView = () => {
           })
           .map((i) => {
             return (
-              <div key={i.id} className={styles.product}>
+              <div key={i.variant.id} className={styles.product}>
                 <figure onClick={() => updateCartViewDisplay()}>
-                  <Link to={`/product/${i.variant.product.id}`}>
+                  <Link to={`/product/${i.variant.product_id}`}>
                     {/* Replace with a product thumbnail/image */}
-                    <div className={styles.placeholder}>
-                      <img
-                        style={{
-                          height: "100%",
-                          width: "100%",
-                          objectFit: "cover",
-                        }}
-                        src={i.variant.product.thumbnail}
-                        alt={`${i.title}`}
-                      />
-                    </div>
+                    <div className={styles.placeholder} />
                   </Link>
                 </figure>
                 <div className={styles.controls}>
                   <div>
                     <div>
-                      <Link to={`/product/${i.variant.product.id}`}>
+                      <Link to={`/product/${i.variant.product_id}`}>
                         {i.title}
                       </Link>
                       <p className={styles.size}>Size: {i.variant.title}</p>
@@ -125,7 +119,7 @@ const CartView = () => {
             updateCartViewDisplay();
             navigate("/checkout");
           }}
-          disabled={cart.items.length < 1 ? true : false}
+          disabled={items.length < 1 ? true : false}
         >
           Checkout
         </button>

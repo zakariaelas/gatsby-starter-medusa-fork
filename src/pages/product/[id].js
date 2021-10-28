@@ -3,77 +3,36 @@ import { BiShoppingBag } from "react-icons/bi";
 import StoreContext from "../../context/store-context";
 import { getSlug, resetOptions } from "../../utils/helper-functions";
 import * as styles from "../../styles/product.module.css";
-import { createClient } from "../../utils/client";
-import { formatPrices } from "../../utils/format-price";
+import { useCart, useItem, useProduct } from "../../medusa-hooks";
 
 const Product = ({ location }) => {
-  const { cart, addVariantToCart } = useContext(StoreContext);
-  const [options, setOptions] = useState({
-    variantId: "",
-    quantity: 0,
-    size: "",
-  });
-
-  const [product, setProduct] = useState(undefined);
-  const client = createClient();
-
-  useEffect(() => {
-    const getProduct = async () => {
-      const slug = getSlug(location.pathname);
-      const response = await client.products.retrieve(slug);
-      setProduct(response.data.product);
-    };
-
-    getProduct();
-  }, [location.pathname]);
-
-  useEffect(() => {
-    if (product) {
-      setOptions(resetOptions(product));
-    }
-  }, [product]);
-
-  const handleQtyChange = (action) => {
-    if (action === "inc") {
-      if (
-        options.quantity <
-        product.variants.find(({ id }) => id === options.variantId)
-          .inventory_quantity
-      )
-        setOptions({
-          variantId: options.variantId,
-          quantity: options.quantity + 1,
-          size: options.size,
-        });
-    }
-    if (action === "dec") {
-      if (options.quantity > 1)
-        setOptions({
-          variantId: options.variantId,
-          quantity: options.quantity - 1,
-          size: options.size,
-        });
-    }
-  };
+  const id = getSlug(location.pathname);
+  const { product } = useProduct(id);
+  const { addItem } = useCart();
+  const { item, quantity, helpers } = useItem(product?.variants[0]);
+  const {
+    decrementQuantity,
+    incrementQuantity,
+    resetItem,
+    getSelectItemProps,
+  } = helpers;
 
   const handleAddToBag = () => {
-    addVariantToCart({
-      variantId: options.variantId,
-      quantity: options.quantity,
+    if (!item || Object.keys(item).length === 0) {
+      return;
+    }
+
+    addItem({
+      variant: item,
+      quantity,
     });
-    if (product) setOptions(resetOptions(product));
+    resetItem();
   };
 
-  return product && cart.id ? (
+  return product ? (
     <div className={styles.container}>
       <figure className={styles.image}>
-        <div className={styles.placeholder}>
-          <img
-            style={{ height: "100%", width: "100%", objectFit: "cover" }}
-            src={product.thumbnail}
-            alt={`${product.title}`}
-          />
-        </div>
+        <div className={styles.placeholder}></div>
       </figure>
       <div className={styles.info}>
         <span />
@@ -81,29 +40,23 @@ const Product = ({ location }) => {
           <div className="title">
             <h1>{product.title}</h1>
           </div>
-          <p className="price">{formatPrices(cart, product.variants[0])}</p>
+          <p className="price">19.50 EUR</p>
           <div className={styles.selection}>
             <p>Select Size</p>
             <div className="selectors">
               {product.variants
                 .slice(0)
                 .reverse()
-                .map((v) => {
+                .map((variant) => {
                   return (
                     <button
-                      key={v.id}
+                      key={variant.id}
                       className={`${styles.sizebtn} ${
-                        v.title === options.size ? styles.selected : null
+                        variant.id === item.id ? styles.selected : null
                       }`}
-                      onClick={() =>
-                        setOptions({
-                          variantId: v.id,
-                          quantity: options.quantity,
-                          size: v.title,
-                        })
-                      }
+                      {...getSelectItemProps({ item: variant })}
                     >
-                      {v.title}
+                      {variant.title}
                     </button>
                   );
                 })}
@@ -112,22 +65,20 @@ const Product = ({ location }) => {
           <div className={styles.selection}>
             <p>Select Quantity</p>
             <div className={styles.qty}>
-              <button
-                className={styles.qtybtn}
-                onClick={() => handleQtyChange("dec")}
-              >
+              <button className={styles.qtybtn} onClick={decrementQuantity}>
                 -
               </button>
-              <span className={styles.ticker}>{options.quantity}</span>
-              <button
-                className={styles.qtybtn}
-                onClick={() => handleQtyChange("inc")}
-              >
+              <span className={styles.ticker}>{quantity}</span>
+              <button className={styles.qtybtn} onClick={incrementQuantity}>
                 +
               </button>
             </div>
           </div>
-          <button className={styles.addbtn} onClick={() => handleAddToBag()}>
+          <button
+            className={styles.addbtn}
+            disabled={Object.keys(item).length === 0}
+            onClick={handleAddToBag}
+          >
             <span>Add to bag</span>
             <BiShoppingBag />
           </button>
